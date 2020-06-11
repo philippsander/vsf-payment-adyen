@@ -90,6 +90,7 @@ export default {
       }
 
       const originKeys = this.$store.state.config.adyen.originKeys;
+      const environment = this.$store.state.config.adyen.environment;
       const origin = window.location.origin;
       if (!originKeys[origin]) {
         console.error('[Adyen] Set origin key in the config!');
@@ -133,7 +134,7 @@ export default {
       const configuration = {
         locale,
         translations,
-        environment: 'test',
+        environment: environment,
         originKey: originKeys[origin],
         paymentMethodsResponse: {
           // There I am setting payment methods
