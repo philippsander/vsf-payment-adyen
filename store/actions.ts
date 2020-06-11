@@ -141,7 +141,7 @@ export const actions: ActionTree<AdyenState, any> = {
             expiryYear: additional_data.encryptedExpiryYear,
             holderName: additional_data.holderName,
             ...browserInfo,
-            allow3DS2: true,
+            allow3DS2: config.adyen.allow3DS2,
             channel: 'web',
             ...(storePaymentMethod ? { is_active_payment_token_enabler: !!storePaymentMethod } : {}),
             ...(additional_data.storedPaymentMethodId ? {
