@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div id="redirectTo3ds1"></div>
     <div id="threeDS2Container"></div>
     <transition name="fade">
       <div class="threeds-challenge" v-show="threedsChallenge">
@@ -11,6 +12,7 @@
 
 <script>
 import i18n from '@vue-storefront/i18n';
+import { currentStoreView } from '@vue-storefront/core/lib/multistore';
 
 export default {
   name: 'FinishPayment',
@@ -110,15 +112,26 @@ export default {
         );
 
         // If it requires 3DS Auth
-        if (result.threeDS2) {
-          const { token, type } = result;
+        if (result.type) {
+          const { type } = result;
 
           switch (type) {
             case 'IdentifyShopper':
-              this.renderThreeDS2DeviceFingerprint(token);
+              this.renderThreeDS2DeviceFingerprint(result.token);
               break;
             case 'ChallengeShopper':
-              this.renderThreeDS2Challenge(token);
+              this.renderThreeDS2Challenge(result.token);
+              break;
+            case 'RedirectShopper':
+              const self = this
+              const { storeCode } = currentStoreView()
+              const testsmth = this.adyenCheckoutInstance.createFromAction({
+                ...result.action,
+                data: {
+                  ...result.action.data,
+                  'TermUrl': `${config.server.baseUrl.endsWith('/') ? config.server.baseUrl : (config.server.baseUrl + '/')}${storeCode}/finalize-3ds1`
+                }
+              }).mount('#redirectTo3ds1')
               break;
             default:
               this.$store.dispatch('notification/spawnNotification', {
