@@ -3,7 +3,7 @@
     <div id="threeDS2Container"></div>
     <transition name="fade">
       <div class="threeds-challenge" v-show="threedsChallenge">
-        <div id="threeDS2Challenge"></div>
+        <div class="threeds-challenge__inner" id="threeDS2Challenge"></div>
       </div>
     </transition>
   </div>

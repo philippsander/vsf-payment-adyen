@@ -417,8 +417,19 @@ export default {
   height: 100%;
   top: 0;
   left: 0;
-  background: #fff;
+  background-color: rgba(0,0,0,0.2);
   z-index: 2000;
+}
+
+.threeds-challenge__inner {
+  position: absolute;
+  width: 100%;
+  max-width: 500px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  padding: 20px;
+  background-color: #fff;
 }
 
 .adyen-checkout__field {
