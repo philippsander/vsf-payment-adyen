@@ -98,7 +98,7 @@ export default {
 
       const storedPaymentMethods = this.$store.getters['payment-adyen/cards']
       
-      if (this.$store.getters['user/isLoggedIn']) {
+      if (this.$store.getters['user/isLoggedIn'] && this.$store.state.config.adyen.saveCards) {
         await Promise.all([
           this.$store.dispatch("payment-adyen/loadVault"),
           this.$store.dispatch("payment-adyen/loadPaymentMethods", {})
@@ -152,7 +152,7 @@ export default {
       this.adyenCheckoutInstance = new AdyenCheckout(configuration);
       const self = this
 
-      const loggedIn = this.$store.getters['user/isLoggedIn']
+      const showStored = this.$store.getters['user/isLoggedIn'] && this.$store.state.config.adyen.saveCards
 
       this.dropin = this.adyenCheckoutInstance
         .create('dropin', {
@@ -174,8 +174,8 @@ export default {
               // Example optional configuration for Cards
               hasHolderName: true,
               holderNameRequired: true,
-              enableStoreDetails: loggedIn,
-              showStoredPaymentMethods: loggedIn,
+              enableStoreDetails: showStored,
+              showStoredPaymentMethods: showStored,
               name: 'Credit or debit card',
               brands: Object.keys(self.cardMaps)
             },
