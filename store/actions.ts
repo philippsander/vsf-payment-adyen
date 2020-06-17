@@ -143,7 +143,8 @@ export const actions: ActionTree<AdyenState, any> = {
             ...browserInfo,
             allow3DS2: config.adyen.allow3DS2,
             channel: 'web',
-            ...(storePaymentMethod ? { is_active_payment_token_enabler: !!storePaymentMethod } : {}),
+            is_active_payment_token_enabler: !!storePaymentMethod,
+            store_cc: !!storePaymentMethod,
             ...(additional_data.storedPaymentMethodId ? {
               storedPaymentMethodId: additional_data.storedPaymentMethodId,
               shopperInteraction: 'ContAuth',
