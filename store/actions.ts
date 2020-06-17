@@ -68,8 +68,14 @@ export const actions: ActionTree<AdyenState, any> = {
         method: 'POST'
       })
       let { result } = await response.json()
+
+      // filter out stored cards where is_visible is false
+      result = result.filter(function(card) {
+        return card.is_visible;
+      })
+
       commit(types.SET_LOADED_CARDS, result)
-      console.log(result)
+      // console.log(result)
     } catch (err) {
       console.error('[Adyen Payments]', err)
     }
@@ -100,7 +106,7 @@ export const actions: ActionTree<AdyenState, any> = {
         })
       })
       let { result } = await response.json()
-      console.log(result)
+      // console.log(result)
       commit(types.SET_PAYMENT_METHODS, result ? result : [])
     } catch (err) {
       console.error('[Adyen Payments]', err)
