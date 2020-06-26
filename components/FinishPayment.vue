@@ -11,6 +11,7 @@
 </template>
 
 <script>
+import config from 'config'
 import i18n from '@vue-storefront/i18n';
 import { currentStoreView } from '@vue-storefront/core/lib/multistore';
 
