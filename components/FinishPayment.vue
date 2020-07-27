@@ -102,7 +102,8 @@ export default {
         }
       };
       this.adyenCheckoutInstance = new AdyenCheckout(configuration);
-      this.initPayment()
+      this.callback()
+      // this.initPayment()
     },
 
     async initPayment () {
