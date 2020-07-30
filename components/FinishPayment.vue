@@ -74,34 +74,37 @@ export default {
       });
     },
 
-    createForm () {
-      const originKeys = this.$store.state.config.adyen.originKeys;
-      const environment = this.$store.state.config.adyen.environment;
-      const origin = window.location.origin;
-      if (!originKeys[origin]) {
-        console.error('[Adyen] Set origin key in the config!');
-      }
+    async createForm () {
+      // const originKeys = this.$store.state.config.adyen.originKeys;
+      // const environment = this.$store.state.config.adyen.environment;
+      // const origin = window.location.origin;
+      // if (!originKeys[origin]) {
+      //   console.error('[Adyen] Set origin key in the config!');
+      // }
 
-      const configuration = {
-        locale: 'en-US',
-        environment: environment,
-        originKey: originKeys[origin],
-        paymentMethodsResponse: {
-          // There I am setting payment methods
-          // For now only scheme === adyen_cc
-          paymentMethods: this.$store.getters['payment-adyen/methods'].filter(
-            method => method.type === 'scheme'
-          ),
-          ...(
-            this.$store.getters['user/isLoggedIn']
-            && this.$store.getters['payment-adyen/cards']
-            && !!this.$store.getters['payment-adyen/cards'].length
-            ? { storedPaymentMethods: this.$store.getters['payment-adyen/cards'] }
-            : {}
-          )
-        }
-      };
-      this.adyenCheckoutInstance = new AdyenCheckout(configuration);
+      // const configuration = {
+      //   locale: 'en-US',
+      //   environment: environment,
+      //   originKey: originKeys[origin],
+      //   paymentMethodsResponse: {
+      //     // There I am setting payment methods
+      //     // For now only scheme === adyen_cc
+      //     paymentMethods: this.$store.getters['payment-adyen/methods'].filter(
+      //       method => method.type === 'scheme'
+      //     ),
+      //     ...(
+      //       this.$store.getters['user/isLoggedIn']
+      //       && this.$store.getters['payment-adyen/cards']
+      //       && !!this.$store.getters['payment-adyen/cards'].length
+      //       ? { storedPaymentMethods: this.$store.getters['payment-adyen/cards'] }
+      //       : {}
+      //     )
+      //   }
+      // };
+      // this.adyenCheckoutInstance = new AdyenCheckout(configuration);
+      if (this.$store.getters['user/isLoggedIn']) {
+        await this.$store.dispatch('user/refresh')
+      }
       this.callback()
       // this.initPayment()
     },
