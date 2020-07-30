@@ -217,4 +217,4 @@ export default {
 };
 </script>
 
-<style lang="scss" src="./AdyenPayments" />
+<style lang="scss" src="./AdyenPayments.scss" />
