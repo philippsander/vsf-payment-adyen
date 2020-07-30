@@ -75,46 +75,43 @@ export default {
     },
 
     async createForm () {
-      // const originKeys = this.$store.state.config.adyen.originKeys;
-      // const environment = this.$store.state.config.adyen.environment;
-      // const origin = window.location.origin;
-      // if (!originKeys[origin]) {
-      //   console.error('[Adyen] Set origin key in the config!');
-      // }
-
-      // const configuration = {
-      //   locale: 'en-US',
-      //   environment: environment,
-      //   originKey: originKeys[origin],
-      //   paymentMethodsResponse: {
-      //     // There I am setting payment methods
-      //     // For now only scheme === adyen_cc
-      //     paymentMethods: this.$store.getters['payment-adyen/methods'].filter(
-      //       method => method.type === 'scheme'
-      //     ),
-      //     ...(
-      //       this.$store.getters['user/isLoggedIn']
-      //       && this.$store.getters['payment-adyen/cards']
-      //       && !!this.$store.getters['payment-adyen/cards'].length
-      //       ? { storedPaymentMethods: this.$store.getters['payment-adyen/cards'] }
-      //       : {}
-      //     )
-      //   }
-      // };
-      // this.adyenCheckoutInstance = new AdyenCheckout(configuration);
-      if (this.$store.getters['user/isLoggedIn']) {
-        await this.$store.dispatch('user/refresh')
+      const originKeys = this.$store.state.config.adyen.originKeys;
+      const environment = this.$store.state.config.adyen.environment;
+      const origin = window.location.origin;
+      if (!originKeys[origin]) {
+        console.error('[Adyen] Set origin key in the config!');
       }
-      this.callback()
-      // this.initPayment()
+
+      const configuration = {
+        locale: 'en-US',
+        environment: environment,
+        originKey: originKeys[origin],
+        paymentMethodsResponse: {
+          // There I am setting payment methods
+          // For now only scheme === adyen_cc
+          paymentMethods: this.$store.getters['payment-adyen/methods'].filter(
+            method => method.type === 'scheme'
+          ),
+          ...(
+            this.$store.getters['user/isLoggedIn']
+            && this.$store.getters['payment-adyen/cards']
+            && !!this.$store.getters['payment-adyen/cards'].length
+            ? { storedPaymentMethods: this.$store.getters['payment-adyen/cards'] }
+            : {}
+          )
+        }
+      };
+      this.adyenCheckoutInstance = new AdyenCheckout(configuration);
+      // if (this.$store.getters['user/isLoggedIn']) {
+      //   await this.$store.dispatch('user/refresh')
+      // }
+      // this.callback()
+      this.initPayment()
     },
 
     async initPayment () {
       try {
-        let result = await this.$store.dispatch(
-          'payment-adyen/initPayment',
-          this.$store.state['payment-adyen'].adyenCard
-        );
+        const result = this.$store.state['payment-adyen'].three3ds2Details
 
         // If it requires 3DS Auth
         if (result.type) {
@@ -127,17 +124,17 @@ export default {
             case 'ChallengeShopper':
               this.renderThreeDS2Challenge(result.token);
               break;
-            case 'RedirectShopper':
-              const self = this
-              const { storeCode } = currentStoreView()
-              const testsmth = this.adyenCheckoutInstance.createFromAction({
-                ...result.action,
-                data: {
-                  ...result.action.data,
-                  'TermUrl': `${config.server.baseUrl.endsWith('/') ? config.server.baseUrl : (config.server.baseUrl + '/')}${storeCode}/finalize-3ds1`
-                }
-              }).mount('#redirectTo3ds1')
-              break;
+            // case 'RedirectShopper':
+            //   const self = this
+            //   const { storeCode } = currentStoreView()
+            //   const testsmth = this.adyenCheckoutInstance.createFromAction({
+            //     ...result.action,
+            //     data: {
+            //       ...result.action.data,
+            //       'TermUrl': `${config.server.baseUrl.endsWith('/') ? config.server.baseUrl : (config.server.baseUrl + '/')}${storeCode}/finalize-3ds1`
+            //     }
+            //   }).mount('#redirectTo3ds1')
+            //   break;
             default:
               this.$store.dispatch('notification/spawnNotification', {
                 type: 'error',
@@ -154,10 +151,6 @@ export default {
             message: result.errorMessage,
             action1: { label: i18n.t('OK') }
           });
-        } else {
-          // 3DS Auth not needed, go further...
-          this.callback()
-          // self.$emit('payed', this.adyenCard);
         }
       } catch (err) {
         console.error(err, 'Adyen');
@@ -185,7 +178,8 @@ export default {
               'payment-adyen/fingerprint3ds',
               {
                 fingerprint:
-                  data && data.details && data.details['threeds2.fingerprint']
+                  data && data.details && data.details['threeds2.fingerprint'],
+                orderId: self.$store.state['payment-adyen'].three3ds2Details.orderId
               }
             );
 
@@ -234,6 +228,7 @@ export default {
                 'payment-adyen/fingerprint3ds',
                 {
                   fingerprint: data.details['threeds2.challengeResult'],
+                  orderId: self.$store.state['payment-adyen'].three3ds2Details.orderId,
                   challenge: true,
                   noPaymentData: true
                 }
