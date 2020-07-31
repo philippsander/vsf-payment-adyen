@@ -59,7 +59,7 @@ export const actions: ActionTree<AdyenState, any> = {
       if (rootGetters['user/getUserToken']) {
         token = `?token=${rootGetters['user/getUserToken']}`
       }
-      
+
       let response = await fetch(adjustMultistoreApiUrl(`${baseUrl}vault${token}`), {
         method: 'POST'
       })
@@ -92,7 +92,7 @@ export const actions: ActionTree<AdyenState, any> = {
       if (rootGetters['user/getUserToken']) {
         token = `?token=${rootGetters['user/getUserToken']}`
       }
-      
+
       let response = await fetch(`${baseUrl}methods/${storeCode}/${cartId}${token}`, {
         method: 'POST',
         body: JSON.stringify({
@@ -161,7 +161,7 @@ export const actions: ActionTree<AdyenState, any> = {
   //     let { result } = await response.json()
 
   //     return result
-      
+
   //   } catch (err) {
   //     console.error('[Adyen Payments]', err)
   //   }
@@ -173,8 +173,8 @@ export const actions: ActionTree<AdyenState, any> = {
       console.error('[Adyen] CartId does not exist')
       return
     }
-    // const baseUrl = `${SideRequest(config.api, 'url')}ext/payment-adyen/`
-    const baseUrl = `http://localhost:8080/api/ext/payment-adyen/`
+    const baseUrl = `${SideRequest(config.api, 'url')}ext/payment-adyen/`
+    // const baseUrl = `http://localhost:8080/api/ext/payment-adyen/`
 
     try {
       const { storeCode } = currentStoreView()
@@ -182,7 +182,7 @@ export const actions: ActionTree<AdyenState, any> = {
       let { result } = await response.json()
 
       return result
-      
+
     } catch (err) {
       console.error('[Adyen Payments]', err)
     }
@@ -204,8 +204,8 @@ export const actions: ActionTree<AdyenState, any> = {
     //   customer_id = rootState.user.current.id
     // }
 
-    // const baseUrl = `${SideRequest(config.api, 'url')}ext/payment-adyen/`
-    const baseUrl = `http://localhost:8080/api/ext/payment-adyen/`
+    const baseUrl = `${SideRequest(config.api, 'url')}ext/payment-adyen/`
+    // const baseUrl = `http://localhost:8080/api/ext/payment-adyen/`
 
     try {
       const { storeCode } = currentStoreView()
@@ -225,7 +225,7 @@ export const actions: ActionTree<AdyenState, any> = {
       let { result } = await response.json()
 
       return result
-      
+
     } catch (err) {
       console.error('[Adyen Payments]', err)
     }
