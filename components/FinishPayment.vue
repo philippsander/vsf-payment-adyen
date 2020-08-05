@@ -14,9 +14,12 @@
 import config from 'config'
 import i18n from '@vue-storefront/i18n';
 import { currentStoreView } from '@vue-storefront/core/lib/multistore';
+import Shared from './Shared'
 
 export default {
   name: 'FinishPayment',
+
+  mixins: [Shared],
 
   props: {
     callback: {
@@ -40,43 +43,9 @@ export default {
     }
   },
 
-  async mounted() {
-    if (!document.getElementById('adyen-secured-fields')) {
-      if (typeof window !== 'undefined') {
-        try {
-          await this.loadScript(
-            'https://checkoutshopper-live.adyen.com/checkoutshopper/sdk/3.3.0/adyen.js'
-          );
-
-          this.createForm()
-
-        } catch (err) {
-          console.info(err, "Couldnt fetch adyen's library");
-        }
-      }
-    } else {
-      this.createForm();
-    }
-  },
-
   methods: {
-    /**
-     * @description - Dynamicly fetches AdyenCheckout class
-     */
-    loadScript(src) {
-      return new Promise((resolve, reject) => {
-        let script = document.createElement('script');
-        script.setAttribute('id', 'adyen-secured-fields');
-        script.src = src;
-        script.onload = () => resolve(script);
-        script.onerror = () => reject(new Error('Script load error: ' + src));
-        document.head.append(script);
-      });
-    },
-
     async createForm () {
-      const originKeys = this.$store.state.config.adyen.originKeys;
-      const environment = this.$store.state.config.adyen.environment;
+      const { originKeys, environment } = this.$store.state.config.adyen;
       const origin = window.location.origin;
       if (!originKeys[origin]) {
         console.error('[Adyen] Set origin key in the config!');
@@ -93,19 +62,13 @@ export default {
             method => method.type === 'scheme'
           ),
           ...(
-            this.$store.getters['user/isLoggedIn']
-            && this.$store.getters['payment-adyen/cards']
-            && !!this.$store.getters['payment-adyen/cards'].length
+            this.hasStoredCards()
             ? { storedPaymentMethods: this.$store.getters['payment-adyen/cards'] }
             : {}
           )
         }
       };
       this.adyenCheckoutInstance = new AdyenCheckout(configuration);
-      // if (this.$store.getters['user/isLoggedIn']) {
-      //   await this.$store.dispatch('user/refresh')
-      // }
-      // this.callback()
       this.initPayment()
     },
 
@@ -166,7 +129,7 @@ export default {
           fingerprintToken: token,
           async onComplete({ data }) {
             // It sends request to /adyen/threeDS2Process
-            if (!data && data.details && data.details['threeds2.fingerprint']) {
+            if (!data || !data.details || !data.details['threeds2.fingerprint']) {
               self.$store.dispatch('notification/spawnNotification', {
                 type: 'error',
                 message: i18n.t('Could not verify card data, sorry...'),
@@ -177,8 +140,7 @@ export default {
             let response = await self.$store.dispatch(
               'payment-adyen/fingerprint3ds',
               {
-                fingerprint:
-                  data && data.details && data.details['threeds2.fingerprint'],
+                fingerprint: data && data.details && data.details['threeds2.fingerprint'],
                 orderId: self.$store.state['payment-adyen'].three3ds2Details.orderId
               }
             );
@@ -235,8 +197,6 @@ export default {
               );
 
               self.threedsChallenge = false;
-              // Finish the hardest way
-              // self.$emit('payed', self.payloadToSend);
               self.callback()
               self.$store.dispatch('payment-adyen/setShowFinishPayment', false)
             } else {

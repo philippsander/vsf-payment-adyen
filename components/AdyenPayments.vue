@@ -8,9 +8,12 @@
 import { currentStoreView } from "@vue-storefront/core/lib/multistore";
 import collectBrowserInfo from "../adyen-utils/browser";
 import i18n from "@vue-storefront/i18n";
+import Shared from './Shared'
 
 export default {
   name: "AdyenPayments",
+
+  mixins: [Shared],
 
   data() {
     return {
@@ -30,38 +33,8 @@ export default {
     };
   },
 
-  async mounted() {
-    if (!document.getElementById("adyen-secured-fields")) {
-      if (typeof window !== "undefined") {
-        try {
-          await this.loadScript(
-            "https://checkoutshopper-live.adyen.com/checkoutshopper/sdk/3.3.0/adyen.js"
-          );
-          this.createForm();
-        } catch (err) {
-          console.info(err, "Couldnt fetch adyen's library");
-        }
-      }
-    } else {
-      this.createForm();
-    }
-  },
-
   methods: {
-    /**
-     * @description - Dynamicly fetches AdyenCheckout class
-     */
-    loadScript(src) {
-      return new Promise((resolve, reject) => {
-        let script = document.createElement("script");
-        script.setAttribute("id", "adyen-secured-fields");
-        script.src = src;
-        script.onload = () => resolve(script);
-        script.onerror = () => reject(new Error("Script load error: " + src));
-        document.head.append(script);
-      });
-    },
-
+    
     async createForm() {
       if (
         this.payment &&
@@ -111,12 +84,6 @@ export default {
       };
 
       const storeView = currentStoreView();
-      const hasStoredCards = () => {
-        const storedPaymentMethods = this.$store.getters["payment-adyen/cards"];
-        return this.$store.getters["user/isLoggedIn"] &&
-          storedPaymentMethods &&
-          !!storedPaymentMethods.length
-      }
 
       const configuration = {
         locale: storeView.i18n.defaultLocale,
@@ -129,12 +96,11 @@ export default {
           paymentMethods: this.$store.getters["payment-adyen/methods"].filter(
             (method) => method.type === "scheme"
           ),
-          ...(hasStoredCards() ? {
-                storedPaymentMethods: this.$store.getters[
-                  "payment-adyen/cards"
-                ],
-              }
-            : {}),
+          ...(
+            this.hasStoredCards()
+            ? { storedPaymentMethods: this.$store.getters['payment-adyen/cards'] }
+            : {}
+          )
         },
       };
       this.adyenCheckoutInstance = new AdyenCheckout(configuration);
