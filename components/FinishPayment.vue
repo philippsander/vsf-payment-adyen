@@ -238,6 +238,7 @@ export default {
               // Finish the hardest way
               // self.$emit('payed', self.payloadToSend);
               self.callback()
+              self.$store.dispatch('payment-adyen/setShowFinishPayment', false)
             } else {
               self.$store.dispatch('notification/spawnNotification', {
                 type: 'error',
@@ -248,6 +249,7 @@ export default {
           },
           onError(error) {
             console.log('error', error);
+            self.$store.dispatch('payment-adyen/setShowFinishPayment', false)
           }
         }
       );

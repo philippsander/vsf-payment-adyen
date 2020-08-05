@@ -71,14 +71,11 @@ export default {
         this.payment.paymentMethodAdditional = {};
       }
 
-      const originKeys = this.$store.state.config.adyen.originKeys;
-      const environment = this.$store.state.config.adyen.environment;
+      const { originKeys, environment } = this.$store.state.config.adyen;
       const origin = window.location.origin;
       if (!originKeys[origin]) {
         console.error("[Adyen] Set origin key in the config!");
       }
-
-      const storedPaymentMethods = this.$store.getters["payment-adyen/cards"];
 
       if (
         this.$store.getters["user/isLoggedIn"] &&
@@ -114,12 +111,17 @@ export default {
       };
 
       const storeView = currentStoreView();
-      let locale = storeView.i18n.defaultLocale;
+      const hasStoredCards = () => {
+        const storedPaymentMethods = this.$store.getters["payment-adyen/cards"];
+        return this.$store.getters["user/isLoggedIn"] &&
+          storedPaymentMethods &&
+          !!storedPaymentMethods.length
+      }
 
       const configuration = {
-        locale,
+        locale: storeView.i18n.defaultLocale,
         translations,
-        environment: environment,
+        environment,
         originKey: originKeys[origin],
         paymentMethodsResponse: {
           // There I am setting payment methods
@@ -127,10 +129,7 @@ export default {
           paymentMethods: this.$store.getters["payment-adyen/methods"].filter(
             (method) => method.type === "scheme"
           ),
-          ...(this.$store.getters["user/isLoggedIn"] &&
-          this.$store.getters["payment-adyen/cards"] &&
-          !!this.$store.getters["payment-adyen/cards"].length
-            ? {
+          ...(hasStoredCards() ? {
                 storedPaymentMethods: this.$store.getters[
                   "payment-adyen/cards"
                 ],
@@ -149,7 +148,6 @@ export default {
         .create("dropin", {
           paymentMethodsConfiguration: {
             card: {
-              // Example optional configuration for Cards
               hasHolderName: true,
               holderNameRequired: true,
               enableStoreDetails: showStored,
@@ -165,9 +163,7 @@ export default {
 
           onSubmit: async (state, dropin) => {
             try {
-              const storeView = currentStoreView();
 
-              // Saved card needs only that
               if (!!state.data.paymentMethod.storedPaymentMethodId) {
                 const cards = self.$store.getters["payment-adyen/cards"];
                 const card = cards.find(
@@ -192,9 +188,7 @@ export default {
 
               this.$store.dispatch("payment-adyen/setCardData", {
                 method: state.data.paymentMethod.type,
-                additional_data: {
-                  ...state.data.paymentMethod,
-                },
+                additional_data: state.data.paymentMethod,
                 browserInfo: {
                   ...collectBrowserInfo(),
                   language: storeView.i18n.defaultLocale,
