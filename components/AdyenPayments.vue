@@ -154,15 +154,17 @@ export default {
 
               this.$store.dispatch("payment-adyen/setCardData", {
                 method: state.data.paymentMethod.type,
-                additional_data: state.data.paymentMethod,
+                additional_data: {
+                  ...state.data.paymentMethod,
+                  ...(state.data.storePaymentMethod
+                  ? { storePaymentMethod: state.data.storePaymentMethod }
+                  : {})
+                },
                 browserInfo: {
                   ...collectBrowserInfo(),
                   language: storeView.i18n.defaultLocale,
                   origin: window.location.origin,
                 },
-                ...(state.data.storePaymentMethod
-                  ? { storePaymentMethod: state.data.storePaymentMethod }
-                  : {}),
               });
 
               this.$emit("providedAdyenData");
