@@ -23,7 +23,7 @@ Before starting to integrate this module in your VueStorefront project, you will
 - [x] 3DS2 authentification
 
 #### To be done:
-- [ ] Retry 3DS2 Authentification entering wrong code.
+- [ ] Retry 3DS2 Authentification after entering wrong code.
 - [ ] Adyen PayPal payment.
 - [ ] Add other payments methods.
 - [ ] 3DS1 authentification.
