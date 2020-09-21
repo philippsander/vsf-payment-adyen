@@ -1,6 +1,20 @@
 # Vue Storefront Adyen Payment Module
 
-Use at Your own risk.
+This module allows payments through Adyen Payments from Vue Storefront using Magento as backend.  
+The module follows [Adyen's recomendations](https://docs.adyen.com/plugins/magento-2/magento-pwa-storefront) for integrating a PWA using their magento extension.
+
+## Requirements
+- Magento >=2.3.5
+- Adyen Magento2 extension version >=6.5
+- Vue Storefront >=1.10.0
+
+## Before you begin
+
+Before starting to integrate this module in your VueStorefront project, you will have to set-up the following:
+- [Create a Adyen test account if you do not have one.](https://www.adyen.com/)
+- [Set up the Adyen Customer Area.](https://docs.adyen.com/plugins/magento-2/set-up-adyen-customer-area)
+- [Set up the plugin in Magento.](https://docs.adyen.com/plugins/magento-2/set-up-the-plugin-in-magento)
+- [Set up the payment methods in Magento.](https://docs.adyen.com/plugins/magento-2/set-up-the-payment-methods-in-magento)
 
 #### Features:
 - [x] Adyen CreditCard payment
