@@ -14,9 +14,12 @@
 import config from 'config'
 import i18n from '@vue-storefront/i18n';
 import { currentStoreView } from '@vue-storefront/core/lib/multistore';
+import Shared from './Shared'
 
 export default {
   name: 'FinishPayment',
+
+  mixins: [Shared],
 
   props: {
     callback: {
@@ -40,43 +43,9 @@ export default {
     }
   },
 
-  async mounted() {
-    if (!document.getElementById('adyen-secured-fields')) {
-      if (typeof window !== 'undefined') {
-        try {
-          await this.loadScript(
-            'https://checkoutshopper-live.adyen.com/checkoutshopper/sdk/3.3.0/adyen.js'
-          );
-
-          this.createForm()
-
-        } catch (err) {
-          console.info(err, "Couldnt fetch adyen's library");
-        }
-      }
-    } else {
-      this.createForm();
-    }
-  },
-
   methods: {
-    /**
-     * @description - Dynamicly fetches AdyenCheckout class
-     */
-    loadScript(src) {
-      return new Promise((resolve, reject) => {
-        let script = document.createElement('script');
-        script.setAttribute('id', 'adyen-secured-fields');
-        script.src = src;
-        script.onload = () => resolve(script);
-        script.onerror = () => reject(new Error('Script load error: ' + src));
-        document.head.append(script);
-      });
-    },
-
-    createForm () {
-      const originKeys = this.$store.state.config.adyen.originKeys;
-      const environment = this.$store.state.config.adyen.environment;
+    async createForm () {
+      const { originKeys, environment } = this.$store.state.config.adyen;
       const origin = window.location.origin;
       if (!originKeys[origin]) {
         console.error('[Adyen] Set origin key in the config!');
@@ -93,9 +62,7 @@ export default {
             method => method.type === 'scheme'
           ),
           ...(
-            this.$store.getters['user/isLoggedIn']
-            && this.$store.getters['payment-adyen/cards']
-            && !!this.$store.getters['payment-adyen/cards'].length
+            this.hasStoredCards()
             ? { storedPaymentMethods: this.$store.getters['payment-adyen/cards'] }
             : {}
           )
@@ -107,10 +74,7 @@ export default {
 
     async initPayment () {
       try {
-        let result = await this.$store.dispatch(
-          'payment-adyen/initPayment',
-          this.$store.state['payment-adyen'].adyenCard
-        );
+        const result = this.$store.state['payment-adyen'].three3ds2Details
 
         // If it requires 3DS Auth
         if (result.type) {
@@ -123,17 +87,17 @@ export default {
             case 'ChallengeShopper':
               this.renderThreeDS2Challenge(result.token);
               break;
-            case 'RedirectShopper':
-              const self = this
-              const { storeCode } = currentStoreView()
-              const testsmth = this.adyenCheckoutInstance.createFromAction({
-                ...result.action,
-                data: {
-                  ...result.action.data,
-                  'TermUrl': `${config.server.baseUrl.endsWith('/') ? config.server.baseUrl : (config.server.baseUrl + '/')}${storeCode}/finalize-3ds1`
-                }
-              }).mount('#redirectTo3ds1')
-              break;
+            // case 'RedirectShopper':
+            //   const self = this
+            //   const { storeCode } = currentStoreView()
+            //   const testsmth = this.adyenCheckoutInstance.createFromAction({
+            //     ...result.action,
+            //     data: {
+            //       ...result.action.data,
+            //       'TermUrl': `${config.server.baseUrl.endsWith('/') ? config.server.baseUrl : (config.server.baseUrl + '/')}${storeCode}/finalize-3ds1`
+            //     }
+            //   }).mount('#redirectTo3ds1')
+            //   break;
             default:
               this.$store.dispatch('notification/spawnNotification', {
                 type: 'error',
@@ -150,10 +114,6 @@ export default {
             message: result.errorMessage,
             action1: { label: i18n.t('OK') }
           });
-        } else {
-          // 3DS Auth not needed, go further...
-          this.callback()
-          // self.$emit('payed', this.adyenCard);
         }
       } catch (err) {
         console.error(err, 'Adyen');
@@ -169,7 +129,7 @@ export default {
           fingerprintToken: token,
           async onComplete({ data }) {
             // It sends request to /adyen/threeDS2Process
-            if (!data && data.details && data.details['threeds2.fingerprint']) {
+            if (!data || !data.details || !data.details['threeds2.fingerprint']) {
               self.$store.dispatch('notification/spawnNotification', {
                 type: 'error',
                 message: i18n.t('Could not verify card data, sorry...'),
@@ -180,8 +140,8 @@ export default {
             let response = await self.$store.dispatch(
               'payment-adyen/fingerprint3ds',
               {
-                fingerprint:
-                  data && data.details && data.details['threeds2.fingerprint']
+                fingerprint: data && data.details && data.details['threeds2.fingerprint'],
+                orderId: self.$store.state['payment-adyen'].three3ds2Details.orderId
               }
             );
 
@@ -230,15 +190,15 @@ export default {
                 'payment-adyen/fingerprint3ds',
                 {
                   fingerprint: data.details['threeds2.challengeResult'],
+                  orderId: self.$store.state['payment-adyen'].three3ds2Details.orderId,
                   challenge: true,
                   noPaymentData: true
                 }
               );
 
               self.threedsChallenge = false;
-              // Finish the hardest way
-              // self.$emit('payed', self.payloadToSend);
               self.callback()
+              self.$store.dispatch('payment-adyen/setShowFinishPayment', false)
             } else {
               self.$store.dispatch('notification/spawnNotification', {
                 type: 'error',
@@ -249,6 +209,7 @@ export default {
           },
           onError(error) {
             console.log('error', error);
+            self.$store.dispatch('payment-adyen/setShowFinishPayment', false)
           }
         }
       );

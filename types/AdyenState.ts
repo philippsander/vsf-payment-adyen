@@ -20,11 +20,18 @@ interface PaymentMethod {
     brands?: Array<string>
 }
 
+export interface AuthDetails {
+    type: string,
+    token: string
+}
+
 export interface AdyenState {
     isAdyenValid: boolean | null,
     adyenCard: any | null,
     paymentMethods: Array<PaymentMethod>,
     saveCard: Boolean,
     loadedCards: Array<any>,
-    publicHash: string | null
+    publicHash: string | null,
+    showFinishPayment: boolean,
+    three3ds2Details: AuthDetails
 }
