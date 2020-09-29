@@ -1,32 +1,56 @@
 # Vue Storefront Adyen Payment Module
 
-Use at Your own risk.
+This module allows payments through Adyen Payments from Vue Storefront using Magento as backend.  
+The module follows [Adyen's recomendations](https://docs.adyen.com/plugins/magento-2/magento-pwa-storefront) for integrating a PWA using their magento extension.
+
+## Requirements
+- Magento >= 2.3.5 (may work in earlier version but it has not been tested)
+- Adyen Magento2 extension version >= 6.5.0
+- Vue Storefront >= 1.10.0
+- Have latest version of [magento2-rest-client](magento2-rest-client). At least you need [this PR](https://github.com/DivanteLtd/magento2-rest-client/pull/35)
+
+## Before you begin
+
+Before starting to integrate this module in your VueStorefront project, you will have to set-up the following:
+- [Create a Adyen test account if you do not have one.](https://www.adyen.com/)
+- [Set up the Adyen Customer Area.](https://docs.adyen.com/plugins/magento-2/set-up-adyen-customer-area)
+- [Set up the plugin in Magento.](https://docs.adyen.com/plugins/magento-2/set-up-the-plugin-in-magento)
+- [Set up the payment methods in Magento.](https://docs.adyen.com/plugins/magento-2/set-up-the-payment-methods-in-magento)
 
 #### Features:
 - [x] Adyen CreditCard payment
-- [x] Adyen PayPal payment
 - [x] Adyen field validation and encryption.
+- [x] 3DS2 authentification
 
 #### To be done:
-- [ ] Add notifications depend on Adyen callbacks.
+- [ ] Retry 3DS2 Authentification after entering wrong code.
+- [ ] Adyen PayPal payment.
 - [ ] Add other payments methods.
-
-If you have any questions or suggestion then please feel free to drop a line ;)
+- [ ] 3DS1 authentification.
+- [ ] Store credit carts with Adyen Vault.
 
 ## Installation:
 
 ```shell
-$ git clone git@github.com:melvin-hamilton-digital/vsf-payment-adyen.git ./vue-storefront/src/modules/adyen
+$ git clone https://github.com/jimmylion/vsf-payment-adyen.git ./vue-storefront/src/modules/adyen
 ```
 
 ## Configuration
 `config/local.json`
 Add API Key and paypal endpoint to hendle PayPal result from adyen.
 ```json
-"adyen": {
-  "originKey": "origin_key",
-  "paypalResultHandler": "https://your-backend/adyen-end-points/paypal"
-}
+  "adyen": {
+    "originKey": "origin_key",
+    "paypalResultHandler": "https://your-backend/adyen-end-points/paypal",
+    "environment": "test",
+    "saveCards": true/false,
+    "allow3DS2": true/false,
+    "originKeys": {
+      "http://localhost:3000": "your localhost origin_key",
+      "https://staging.your-vsf.com": "your staging origin_key",
+      "https://your-vsf.com": "your production origin key"
+    }
+  },
 ```
 
 set Driver for adyen
@@ -40,11 +64,6 @@ set Driver for adyen
   }
 
 ```
-[How to get the API key](https://docs.adyen.com/developers/user-management/how-to-get-the-api-key)
-
-`sprykerConfirm` - used in /store/actions.ts -> backConfirmation 
-
-
 
 ## Register the Adyen module
 
@@ -52,11 +71,11 @@ In `./src/modules/index.ts`
 
 ```js
 ...
-import { Adyen } from './adyen'
+import { PaymentAdyen } from './payment-adyen';
 
 export const registerModules: VueStorefrontModule[] = [
   ...,
-  Adyen
+  PaymentAdyen
 ]
 ```
 
@@ -64,61 +83,32 @@ export const registerModules: VueStorefrontModule[] = [
 Under your theme `components/core/blocks/Checkout/Payment.vue`.
 
 ```js
-import CardForm from 'src/modules/adyen/components/CardForm'
-import PayPal from 'src/modules/adyen/components/PayPal'
-
 export default {
   components: {
     ...
-    CardForm,
-    PayPal
-  },
-  ...
-  computed: {
-  ...
-    isAdyenValid () {
-      return this.$store.state.adyen.isAdyenValid
-    }
+    AdyenPayments: () =>
+      import("src/modules/payment-adyen/components/AdyenPayments.vue")
   },
 ```
+
+@todo - explain where and how to include the FinishPayment component.  In our case it is in:
+src/themes/jimmylion-theme/pages/Checkout.vue
+src/themes/jimmylion-theme/components/ui/Checkout/OrderReview.vue
 
 Also add form component to your template:
 
 ```html
-<card-form v-if="payment.paymentMethod === 'adyenCreditCard'"/>
-<pay-pal v-else-if="payment.paymentMethod === 'adyenPayPal'"/>
-```
-and !isAdyenValid to "Go review the order" button, for disabling it until all card data was validate.
-```html
-<button-full
-  @click.native="sendDataToCheckout"
-  data-testid="paymentSubmit"
-  :disabled="$v.payment.$invalid || !isAdyenValid"
->
-  {{ $t('Go review the order') }}
-</button-full>
+<AdyenPayments
+  v-show="payment.paymentMethod === 'adyen_cc' && adyenVisible"
+  @providedAdyenData="providedAdyenData"
+/>
 ```
 
-Your backend should return 
-`"paymentmethods_endpoint": "https://www.en.spryker-demo.melvin-hamilton.store/vsbridge/cart/payment-methods?token={{token}}&cartId={{cartId}}",`
-```json
-{
-    "code": 200,
-    "result": [
-        {
-            "code": "adyenCreditCard",
-            "title": "Credit Card"
-        },
-        {
-            "code": "adyenPayPal",
-            "title": "PayPal"
-        }
-    ]
-}
-```
+## API Installation
+[How to get the API key](https://docs.adyen.com/developers/user-management/how-to-get-the-api-key)
+
+
 ## References
-In vue-storefront/src/modules/adyen/components/CardForm.vue find `csfSetupObj` inside you can add styles, placeholders, define rootNode etc.
-
 [Styling Secured Fields](https://docs.adyen.com/developers/checkout/api-integration/configure-secured-fields/styling-secured-fields)
 
 ```js

@@ -1,6 +1,7 @@
 import { MutationTree } from 'vuex'
 import * as types from './mutation-types'
 import Vue from 'vue'
+import { AuthDetails } from '../types/AdyenState'
 
 export const mutations: MutationTree<any> = {
   [types.ADD_CARD_DATA] (state, payload) {
@@ -47,6 +48,14 @@ export const mutations: MutationTree<any> = {
 
   [types.SET_PUBLIC_HASH] (state, value) {
     state.publicHash = value
+  },
+
+  [types.SET_SHOW_FINISH_PAYMENT] (state, value) {
+    state.showFinishPayment = value
+  },
+
+  [types.SET_3DS_DETAILS] (state, details: AuthDetails) {
+    Vue.set(state, 'three3ds2Details', details)
   }
 
 }
