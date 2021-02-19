@@ -3,9 +3,9 @@ export default {
         if (!document.getElementById('adyen-secured-fields')) {
           if (typeof window !== 'undefined') {
             try {
-              await this.loadScript(
-                'https://checkoutshopper-live.adyen.com/checkoutshopper/sdk/3.3.0/adyen.js'
-              );
+              const dropInScriptUrl = 'https://checkoutshopper-%ENV%.adyen.com/checkoutshopper/sdk/3.3.0/adyen.js'
+              const scriptUrl = dropInScriptUrl.replace('%ENV%', config.adyen.environment)
+              await this.loadScript(scriptUrl);
     
               this.createForm()
     
